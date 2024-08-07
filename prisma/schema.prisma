@@ -1,0 +1,215 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  admin
+  driver
+  operation
+  field
+  sales
+}
+
+model User {
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  name           String
+  email          String?   @unique
+  emailVerified  DateTime?
+  role           UserRole  @default(driver)
+  hashedPassword String
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  accounts    Account[]
+  DriverTasks DriverTasks[]
+  GuestInfo   GuestInfo[]
+}
+
+model Account {
+  id                String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String  @db.ObjectId
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.String
+  access_token      String? @db.String
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.String
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+ 
+  @@unique([provider, providerAccountId])
+}
+
+model DriverTasks {
+  id           String @id @default(auto()) @map("_id") @db.ObjectId
+  date         String
+  activity     String
+  tourist      String @db.ObjectId
+  timeToPickup String
+  driverId     String @db.ObjectId
+  driver       User   @relation(fields: [driverId], references: [id])
+  guest        Guest  @relation(fields: [tourist], references: [id])
+}
+
+model Guest {
+  id                 String        @id @default(auto()) @map("_id") @db.ObjectId
+  name               String
+  // email           String?   @unique
+  // contact         String? 
+  requisitionGuestId String?       @unique @db.ObjectId
+  points             Float
+  filledDate         DateTime
+  bookedDate         DateTime
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  guestInfo          GuestInfo[]
+  itinerary          Itinerary[]
+  roomBooking        RoomBooking[]
+  cruise             Cruise[]
+  discount           Discount[]
+  vehical            Vehical[]
+  flight             Flight[]
+  fiberboat          Fiberboat[]
+  DriverTasks        DriverTasks[]
+}
+
+enum channel {
+  Custom
+  Guest
+  Brochure
+  Website
+  B2B
+}
+
+enum vip {
+  mid
+  reg
+  high
+  low
+}
+
+model GuestInfo {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  email           String?  
+  contact         String?
+  Channel         String
+  assignedTo      String   @db.ObjectId
+  service         String
+  category        String
+  guestType       String
+  vip             String
+  dateOfArrival   DateTime
+  timeOfArrival   String
+  dateOfDeparture DateTime
+  timeOfDeparture String
+  adult           Int?
+  adult12         Int?
+  ch512           Int?
+  ch35            Int?
+  infant          Int?
+  total           Int?
+  guestId         String?  @unique @db.ObjectId
+  guest           Guest?   @relation(fields: [guestId], references: [id])
+  operator        User?    @relation(fields: [assignedTo], references: [id])
+}
+
+model Itinerary {
+  id       String   @id @default(auto()) @map("_id") @db.ObjectId
+  date     String
+  day      String
+  stay     String
+  activity String[]
+  guestId  String?  @unique @db.ObjectId
+  guest    Guest?   @relation(fields: [guestId], references: [id])
+}
+
+model RoomBooking {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  place        String
+  hotel        String[]
+  choosedhotel String
+  roomType     String
+  plan         String
+  rooms        String
+  Ex_ADL       String
+  CWB          String
+  CWOB         String
+  comp_Child   String
+  checkIn      String
+  checkOut     String
+  guestChoice  String
+  guestId      String   @unique @db.ObjectId
+  guest        Guest    @relation(fields: [guestId], references: [id])
+}
+
+model Cruise {
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  time        String?
+  route       String?
+  cruise      String?
+  journeyDate String?
+  seat_class  String?
+  PNR         String?
+  guestId     String  @unique @db.ObjectId
+  guest       Guest   @relation(fields: [guestId], references: [id])
+}
+
+model Vehical {
+  id           String  @id @default(auto()) @map("_id") @db.ObjectId
+  place        String?
+  service      String?
+  ac_nonac     String?
+  vehical_type String?
+  guestId      String  @unique @db.ObjectId
+  guest        Guest   @relation(fields: [guestId], references: [id])
+}
+
+model Discount {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  Activies      String?
+  time          String?
+  date          String?
+  complimentary Boolean?
+  remark        String?
+  vehical_type  String?
+  service       Boolean?
+  amount        String?
+  pax           String?
+  guestId       String   @unique @db.ObjectId
+  guest         Guest    @relation(fields: [guestId], references: [id])
+}
+
+model Flight {
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  time        String?
+  arrival     String?
+  flightno    String?
+  deptcity    String?
+  arrivalcity String?
+  PNR         String?
+  guestId     String  @unique @db.ObjectId
+  guest       Guest   @relation(fields: [guestId], references: [id])
+}
+
+model Fiberboat {
+  id       String  @id @default(auto()) @map("_id") @db.ObjectId
+  time     String?
+  arrival  String?
+  stay     String?
+  service  String?
+  boattype String?
+  guestId  String  @unique @db.ObjectId
+  guest    Guest   @relation(fields: [guestId], references: [id])
+}
